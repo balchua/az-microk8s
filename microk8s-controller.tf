@@ -120,13 +120,13 @@ resource "null_resource" "setup_tokens" {
 
     provisioner "remote-exec" {
         inline = [
-            "mkdir -p /run/config",
+            "mkdir -p /tmp/config",
             "until /snap/bin/microk8s.status --wait-ready; do sleep 1; echo \"waiting for status..\"; done",
             "/snap/bin/microk8s.kubectl label node ${azurerm_linux_virtual_machine.controllers.name} node-role.kubernetes.io/master=master",            
             "/snap/bin/microk8s.add-node --token \"${var.cluster_token}\" --token-ttl ${var.cluster_token_ttl_seconds}",
-            "/snap/bin/microk8s.kubectl config view --raw > /run/config/client.config",
-            "/snap/microk8s/current/bin/sed -i 's/127.0.0.1/${azurerm_public_ip.controllers.ip_address}/g' /run/config/client.config",
-            "/snap/microk8s/current/bin/sed -i 's/#MOREIPS/IP.99 = ${azurerm_public_ip.controllers.ip_address}\n#MOREIPS/g' /var/snap/microk8s/current/certs/csr.conf.template",
+            "/snap/bin/microk8s.kubectl config view --raw > /tmp/config/client.config",
+            "/snap/microk8s/current/bin/sed -i 's/127.0.0.1/${azurerm_public_ip.controllers.ip_address}/g' /tmp/config/client.config",
+            "/snap/microk8s/current/bin/sed -i 's/#MOREIPS/IP.99 = ${azurerm_public_ip.controllers.ip_address}\\n#MOREIPS/g' /var/snap/microk8s/current/certs/csr.conf.template",
         ]
     }
 }
