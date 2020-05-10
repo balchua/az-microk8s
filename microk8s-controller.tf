@@ -67,7 +67,7 @@ resource "azurerm_linux_virtual_machine" "controllers" {
         
     admin_ssh_key {
         username       = "ubuntu"
-        public_key     = file("/home/thor/.ssh/id_rsa.pub")
+        public_key     = file(pathexpand("${var.ssh_public_key}"))
     }
 
     lifecycle {
@@ -83,10 +83,6 @@ data "template_file" "controller_config" {
     template = file("${path.module}/templates/master.yaml.tmpl")
     vars = {
       microk8s_channel = "${var.microk8s_channel}"
-      # controller_name = "${azurerm_linux_virtual_machine.controllers.name}"
-      # controller_ip = "${azurerm_public_ip.controllers.ip_address}"
-      # cluster_token = "${var.cluster_token}"
-      # cluster_token_ttl_seconds = "${var.cluster_token_ttl_seconds}"
     }
 }
 
@@ -127,7 +123,15 @@ resource "null_resource" "setup_tokens" {
             "/snap/bin/microk8s.kubectl config view --raw > /tmp/config/client.config",
             "/snap/microk8s/current/bin/sed -i 's/127.0.0.1/${azurerm_public_ip.controllers.ip_address}/g' /tmp/config/client.config",
             "/snap/microk8s/current/bin/sed -i 's/#MOREIPS/IP.99 = ${azurerm_public_ip.controllers.ip_address}\\n#MOREIPS/g' /var/snap/microk8s/current/certs/csr.conf.template",
+            "/snap/bin/microk8s.kubectl cordon microk8s-${var.cluster_name}-controller",
         ]
     }
 }
 
+resource "null_resource" "get_kubeconfig" {
+    depends_on = [null_resource.setup_tokens]    
+
+    provisioner "local-exec" {
+        command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${var.ssh_public_key}  ubuntu@${azurerm_public_ip.controllers.ip_address}:/tmp/config/client.config /tmp/"
+    }
+}

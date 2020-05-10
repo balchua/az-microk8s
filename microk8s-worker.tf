@@ -37,7 +37,7 @@ resource "azurerm_network_interface_security_group_association" "workers" {
 resource "azurerm_linux_virtual_machine" "workers" {
     resource_group_name = azurerm_resource_group.cluster.name
     count               = var.worker_count
-    depends_on          = [azurerm_network_interface_security_group_association.workers, null_resource.setup_tokens]
+    depends_on          = [azurerm_network_interface_security_group_association.workers]
     name                = "microk8s-${var.cluster_name}-worker-${count.index}"
     location            = var.region
     
@@ -69,7 +69,7 @@ resource "azurerm_linux_virtual_machine" "workers" {
         
     admin_ssh_key {
         username       = "ubuntu"
-        public_key     = file("/home/thor/.ssh/id_rsa.pub")
+        public_key     = file(pathexpand("${var.ssh_public_key}"))
     }
 
     lifecycle {
@@ -92,7 +92,7 @@ data "template_file" "worker_config" {
 
 resource "null_resource" "set_worker_sudo" {
     count           = "${var.worker_count}"
-    depends_on      = [null_resource.setup_tokens]
+    depends_on      = [azurerm_linux_virtual_machine.workers, null_resource.setup_tokens]
 
     connection {
       type    = "ssh"
@@ -111,7 +111,7 @@ resource "null_resource" "set_worker_sudo" {
 
 resource "null_resource" "join_nodes" {
     count           = "${var.worker_count}"
-    depends_on      = [null_resource.setup_tokens, null_resource.set_worker_sudo]
+    depends_on      = [null_resource.set_worker_sudo]
 
     connection {
       type    = "ssh"

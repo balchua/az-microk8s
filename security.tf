@@ -22,12 +22,42 @@ resource "azurerm_network_security_rule" "controller-ssh" {
   destination_address_prefix  = azurerm_subnet.controller.address_prefix
 }
 
+resource "azurerm_network_security_rule" "controller-http" {
+  resource_group_name = azurerm_resource_group.cluster.name
+
+  name                        = "allow-http"
+  network_security_group_name = azurerm_network_security_group.controller.name
+  priority                    = "2005"
+  access                      = "Allow"
+  direction                   = "Inbound"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "80"
+  source_address_prefix       = "*"
+  destination_address_prefix  = azurerm_subnet.controller.address_prefix
+}
+
+resource "azurerm_network_security_rule" "controller-https" {
+  resource_group_name = azurerm_resource_group.cluster.name
+
+  name                        = "allow-https"
+  network_security_group_name = azurerm_network_security_group.controller.name
+  priority                    = "2010"
+  access                      = "Allow"
+  direction                   = "Inbound"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "443"
+  source_address_prefix       = "*"
+  destination_address_prefix  = azurerm_subnet.controller.address_prefix
+}
+
 resource "azurerm_network_security_rule" "controller-etcd" {
   resource_group_name = azurerm_resource_group.cluster.name
 
   name                        = "allow-etcd"
   network_security_group_name = azurerm_network_security_group.controller.name
-  priority                    = "2005"
+  priority                    = "2015"
   access                      = "Allow"
   direction                   = "Inbound"
   protocol                    = "Tcp"
@@ -43,7 +73,7 @@ resource "azurerm_network_security_rule" "controller-kube-metrics" {
 
   name                        = "allow-kube-metrics"
   network_security_group_name = azurerm_network_security_group.controller.name
-  priority                    = "2012"
+  priority                    = "2020"
   access                      = "Allow"
   direction                   = "Inbound"
   protocol                    = "Tcp"
@@ -58,7 +88,7 @@ resource "azurerm_network_security_rule" "controller-apiserver" {
 
   name                        = "allow-apiserver"
   network_security_group_name = azurerm_network_security_group.controller.name
-  priority                    = "2015"
+  priority                    = "2025"
   access                      = "Allow"
   direction                   = "Inbound"
   protocol                    = "Tcp"
@@ -79,8 +109,8 @@ resource "azurerm_network_security_rule" "controller-kubelet" {
   direction                   = "Inbound"
   protocol                    = "Tcp"
   source_port_range           = "*"
-  destination_port_range      = "10255"
-  source_address_prefix       = "*"
+  destination_port_range      = "10250"
+  source_address_prefixes    = [azurerm_subnet.controller.address_prefix, azurerm_subnet.worker.address_prefix]
   destination_address_prefix = azurerm_subnet.controller.address_prefix
 }
 
@@ -95,7 +125,7 @@ resource "azurerm_network_security_rule" "controller-cluster-agent" {
   protocol                    = "Tcp"
   source_port_range           = "*"
   destination_port_range      = "25000"
-  source_address_prefix       = "*"
+  source_address_prefixes       = [azurerm_subnet.controller.address_prefix, azurerm_subnet.worker.address_prefix]
   destination_address_prefix  = "*"
 }
 
@@ -114,21 +144,6 @@ resource "azurerm_network_security_rule" "controller-allow-loadblancer" {
   source_port_range           = "*"
   destination_port_range      = "*"
   source_address_prefix       = "AzureLoadBalancer"
-  destination_address_prefix  = "*"
-}
-
-resource "azurerm_network_security_rule" "controller-deny-all" {
-  resource_group_name = azurerm_resource_group.cluster.name
-
-  name                        = "deny-all"
-  network_security_group_name = azurerm_network_security_group.controller.name
-  priority                    = "3005"
-  access                      = "Deny"
-  direction                   = "Inbound"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "*"
   destination_address_prefix  = "*"
 }
 
@@ -216,7 +231,7 @@ resource "azurerm_network_security_rule" "worker-cluster-agent" {
   protocol                    = "Tcp"
   source_port_range           = "*"
   destination_port_range      = "25000"
-  source_address_prefix       = "*"
+  source_address_prefixes       = [azurerm_subnet.controller.address_prefix, azurerm_subnet.worker.address_prefix]
   destination_address_prefix  = "*"
 }
 
@@ -235,20 +250,5 @@ resource "azurerm_network_security_rule" "worker-allow-loadblancer" {
   source_port_range           = "*"
   destination_port_range      = "*"
   source_address_prefix       = "AzureLoadBalancer"
-  destination_address_prefix  = "*"
-}
-
-resource "azurerm_network_security_rule" "worker-deny-all" {
-  resource_group_name = azurerm_resource_group.cluster.name
-
-  name                        = "deny-all"
-  network_security_group_name = azurerm_network_security_group.worker.name
-  priority                    = "3005"
-  access                      = "Deny"
-  direction                   = "Inbound"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "*"
   destination_address_prefix  = "*"
 }

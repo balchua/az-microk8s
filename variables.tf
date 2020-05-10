@@ -19,7 +19,7 @@ variable "host_cidr" {
 variable "controller_type" {
     type        = string
     description = "The VM size type for the controller."
-    default     = "Standard_DS2_v2"
+    default     = "Standard_DS1_v2"
 }
 
 variable "worker_type" {
@@ -31,7 +31,7 @@ variable "worker_type" {
 variable "worker_count" {
     type        = number
     description = "The number of workers."
-    default     = "1"
+    default     = "2"
 }
 
 variable "microk8s_channel" {
@@ -50,4 +50,16 @@ variable "cluster_token" {
     type        = "string"
     description = "The cluster token to use to join a node.  Must be 32 alphanumeric long." 
     default     = "qwertyuiopasdfghjklzxcvbnm1234567"
+}
+
+variable "ssh_public_key" {
+    type        = string
+    description = "Your public key location. usually located in ~/.ssh/id_rsa.pub"
+    default     = "~/.ssh/id_rsa.pub"
+}
+
+variable "ssh_private_key" {
+    type        = string
+    description = "Your public key location. usually located in ~/.ssh/id_rsa"
+    default     = "~/.ssh/id_rsa"
 }
