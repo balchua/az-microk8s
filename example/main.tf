@@ -1,6 +1,5 @@
 module "az-microk8s" {
-    #source = "git::https://github.com/balchua/az-microk8s"
-    source = "../"
+    source = "git::https://github.com/balchua/az-microk8s"
     region = "southeastasia"
     cluster_name = "cetacean"
     host_cidr = "10.0.0.0/16" 
