@@ -1,8 +1,8 @@
 # Azure Terraform Microk8s
 
-**This currently works for `edge` channel, as the token generation is not yet merged with the latest stable Microk8s version.**
+**This currently works for `latest/stable` channel, as the token generation is not yet merged with the latest stable Microk8s version.**
 
-Bootstrap a multi node Microk8s in digitalocean with Terraform.
+Bootstrap a multi node Microk8s in Azure with Terraform.
 
 For example to bootstrap 1 controller and 1 worker.
 
@@ -17,7 +17,7 @@ module "az-microk8s" {
     worker_type = "Standard_DS1_v2"
     worker_count = "2"
 
-    microk8s_channel = "edge"
+    microk8s_channel = "latest/stable"
     cluster_token = "PoiuyTrewQasdfghjklMnbvcxz123409"
     cluster_token_ttl_seconds = 3600    
 }
