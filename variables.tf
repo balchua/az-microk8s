@@ -16,22 +16,16 @@ variable "host_cidr" {
   default     = "10.0.0.0/16"
 }
 
-variable "controller_type" {
+variable "node_type" {
     type        = string
-    description = "The VM size type for the controller."
-    default     = "Standard_DS1_v2"
-}
-
-variable "worker_type" {
-    type        = string
-    description = "The VM size type for the worker."
+    description = "The VM size type for the MicroK8s node."
     default     = "Standard_DS2_v2"
 }
 
-variable "worker_count" {
+variable "node_count" {
     type        = number
-    description = "The number of workers."
-    default     = "2"
+    description = "The number of MicroK8s nodes."
+    default     = "3"
 }
 
 variable "microk8s_channel" {
@@ -47,7 +41,7 @@ variable "cluster_token_ttl_seconds" {
 }
 
 variable "cluster_token" {
-    type        = "string"
+    type        = string
     description = "The cluster token to use to join a node.  Must be 32 alphanumeric long." 
     default     = "qwertyuiopasdfghjklzxcvbnm1234567"
 }

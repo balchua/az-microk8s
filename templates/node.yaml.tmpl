@@ -21,26 +21,12 @@ package_update: true
 packages:
 - nfs-kernel-server
 - bridge-utils
+- open-iscsi 
+
+runcmd:
+  - [ systemctl, start, iscsid ]
+  - sudo usermod -a -G microk8s ubuntu
 
 snap:
     commands:
         00: snap install microk8s --channel=${microk8s_channel} --classic
-
-
-# run commands
-# default: none
-# runcmd contains a list of either lists or a string
-# each item will be executed in order at rc.local like level with
-# output to the console
-# - runcmd only runs during the first boot
-# - if the item is a list, the items will be properly executed as if
-#   passed to execve(3) (with the first arg as the command).
-# - if the item is a string, it will be simply written to the file and
-#   will be interpreted by 'sh'
-#
-# Note, that the list has to be proper yaml, so you have to quote
-# any characters yaml would eat (':' can be problematic)
-runcmd:
- - mkdir /run/mydir    
- - sudo usermod -a -G microk8s ubuntu
-       

@@ -1,23 +1,21 @@
 # Azure Terraform Microk8s
 
-**This currently works for `edge` channel, as the token generation is not yet merged with the latest stable Microk8s version.**
+**This currently works for `1.19+` channel, as the token generation is not yet merged with the latest stable Microk8s version.**
 
-Bootstrap a multi node Microk8s in digitalocean with Terraform.
+Bootstrap an Highly available MicroK8s in Azure with Terraform.
 
-For example to bootstrap 1 controller and 1 worker.
+For example to bootstrap a 3 node MicroK8s.
 
 ```hcl
-
 module "az-microk8s" {
-    source = "git::https://github.com/balchua/az-microk8s"
+    //source = "git::https://github.com/balchua/az-microk8s"
+    source = "../"
     region = "southeastasia"
-    cluster_name = "cetacean"
+    cluster_name = "hades"
     host_cidr = "10.0.0.0/16" 
-    controller_type = "Standard_DS1_v2"
-    worker_type = "Standard_DS1_v2"
-    worker_count = "2"
-
-    microk8s_channel = "edge"
+    node_type = "Standard_DS3_v2"
+    node_count = "3"
+    microk8s_channel = "latest/stable"
     cluster_token = "PoiuyTrewQasdfghjklMnbvcxz123409"
     cluster_token_ttl_seconds = 3600    
 }
@@ -141,21 +139,19 @@ To override this, add a location of your public and private keys to the variable
 Example:
 
 ```hcl
-
 module "az-microk8s" {
-    source = "git::https://github.com/balchua/az-microk8s"
+    //source = "git::https://github.com/balchua/az-microk8s"
+    source = "../"
     region = "southeastasia"
-    cluster_name = "cetacean"
+    cluster_name = "hades"
     host_cidr = "10.0.0.0/16" 
-    controller_type = "Standard_DS1_v2"
-    worker_type = "Standard_DS1_v2"
-    worker_count = "2"
-
-    microk8s_channel = "edge"
+    node_type = "Standard_DS3_v2"
+    node_count = "3"
+    microk8s_channel = "latest/edge"
     cluster_token = "PoiuyTrewQasdfghjklMnbvcxz123409"
-    cluster_token_ttl_seconds = 3600    
+    cluster_token_ttl_seconds = 3600
     ssh_public_key = "/data/keys/my_public_key"
-    ssh_private_key = "/data/keys/my_private_key"
+    ssh_private_key = "/data/keys/my_private_key"  
 }
 
 ```
