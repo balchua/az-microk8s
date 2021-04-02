@@ -52,8 +52,8 @@ resource "azurerm_linux_virtual_machine" "nodes" {
     
     source_image_reference {
         publisher = "Canonical"
-        offer     = "UbuntuServer"
-        sku       = "18.04-LTS"
+        offer     = "0001-com-ubuntu-server-focal"
+        sku       = "20_04-lts"
         version   = "latest"
     }
 
@@ -105,34 +105,8 @@ resource "null_resource" "set_node_sudo" {
     }
 }
 
-
-resource "null_resource" "join_nodes" {
-    count           = var.node_count - 1 < 1 ? 0 : var.node_count - 1
-    depends_on      = [null_resource.set_node_sudo]
-
-    connection {
-      type    = "ssh"
-      host    = azurerm_public_ip.nodes.*.ip_address[count.index]
-      user    = "ubuntu"
-      timeout = "15m"
-    }
-
-    provisioner "file" {
-        content     = templatefile("${path.module}/templates/join.sh", 
-            {
-                cluster_token = var.cluster_token
-                main_node = azurerm_linux_virtual_machine.nodes[0].private_ip_address
-            })
-        destination = "/tmp/join.sh"
-    }    
-
-    provisioner "remote-exec" {
-        inline = [   
-            "sh /tmp/join.sh",        
-        ]
-    }
-}
-
+# setup_token must be done only on the main node.
+# Then prepare for the join nodes by creating the sequence token in /tmp/current_joining_node.txt
 resource "null_resource" "setup_tokens" {
     depends_on = [null_resource.set_node_sudo]
     connection {
@@ -141,7 +115,12 @@ resource "null_resource" "setup_tokens" {
       user    = "ubuntu"
       timeout = "15m"
     }  
-    
+
+    provisioner "local-exec" {
+        interpreter = ["bash", "-c"]
+        command = "echo \"1\" > /tmp/current_joining_node.txt"
+    }
+
     provisioner "file" {
         content     = templatefile("${path.module}/templates/add-node.sh", 
             {
@@ -158,6 +137,47 @@ resource "null_resource" "setup_tokens" {
         ]
     }
 }
+
+# Joining nodes must be done in sequence.  
+# The first and last provisioners is to make sure that joining nodes is not done in parallel.
+resource "null_resource" "join_nodes" {
+    count           = var.node_count - 1 < 1 ? 0 : var.node_count - 1
+    depends_on      = [null_resource.set_node_sudo, null_resource.setup_tokens]
+
+    connection {
+      type    = "ssh"
+      host    = element(azurerm_public_ip.nodes.*.ip_address, count.index + 1)
+      user    = "ubuntu"
+      timeout = "15m"
+    }
+
+    provisioner "local-exec" {
+        interpreter = ["bash", "-c"]
+        command = "while [[ $(cat /tmp/current_joining_node.txt) != \"${count.index +1}\" ]]; do echo \"${count.index +1} is waiting...\";sleep 5;done"
+    }
+
+    provisioner "file" {
+        content     = templatefile("${path.module}/templates/join.sh", 
+            {
+                cluster_token = var.cluster_token
+                main_node = azurerm_linux_virtual_machine.nodes[0].private_ip_address
+            })
+        destination = "/tmp/join.sh"
+    }    
+
+    provisioner "remote-exec" {
+        inline = [   
+            "sh /tmp/join.sh",        
+        ]
+    }
+
+    provisioner "local-exec" {
+        interpreter = ["bash", "-c"]
+        command = "echo \"${count.index+2}\" > /tmp/current_joining_node.txt"
+    }
+}
+
+
 
 resource "null_resource" "get_kubeconfig" {
     depends_on = [null_resource.setup_tokens]    
