@@ -42,13 +42,12 @@ resource "azurerm_linux_virtual_machine" "nodes" {
     
     size                = var.node_type
     custom_data         = base64encode(data.template_file.node_config.rendered)
+
     # storage
     os_disk {
-        name                 = "microk8s-${var.cluster_name}-node-${count.index}"
-        caching              = "None"
-        storage_account_type = "Premium_LRS"
+      caching              = "ReadWrite"
+      storage_account_type = "Standard_LRS"
     }
-
     
     source_image_reference {
         publisher = "Canonical"
@@ -65,7 +64,8 @@ resource "azurerm_linux_virtual_machine" "nodes" {
     # Azure requires setting admin_ssh_key, though Ignition custom_data handles it too
     admin_username = "ubuntu"
     disable_password_authentication = true
-        
+
+
     admin_ssh_key {
         username       = "ubuntu"
         public_key     = file(pathexpand(var.ssh_public_key))

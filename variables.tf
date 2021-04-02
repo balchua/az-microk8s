@@ -54,6 +54,6 @@ variable "ssh_public_key" {
 
 variable "ssh_private_key" {
     type        = string
-    description = "Your public key location. usually located in ~/.ssh/id_rsa"
+    description = "Your private key location. usually located in ~/.ssh/id_rsa"
     default     = "~/.ssh/id_rsa"
 }
