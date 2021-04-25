@@ -111,6 +111,7 @@ resource "null_resource" "set_node_sudo" {
 # Then prepare for the join nodes by creating the sequence token in /tmp/current_joining_node.txt
 resource "null_resource" "setup_tokens" {
     depends_on = [null_resource.set_node_sudo]
+    count      = var.node_count
     triggers = {
       rerun = random_id.cluster_token.hex
     }
