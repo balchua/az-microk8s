@@ -65,7 +65,7 @@ resource "azurerm_linux_virtual_machine" "nodes" {
 
     # network
     network_interface_ids = [
-        azurerm_network_interface.nodes.*.id[count.index]
+        element(azurerm_network_interface.nodes.*.id, count.index)
     ]
 
     # Azure requires setting admin_ssh_key, though Ignition custom_data handles it too
@@ -76,13 +76,6 @@ resource "azurerm_linux_virtual_machine" "nodes" {
     admin_ssh_key {
         username       = "ubuntu"
         public_key     = file(pathexpand(var.ssh_public_key))
-    }
-
-    lifecycle {
-        ignore_changes = [
-        os_disk,
-        custom_data,
-        ]
     }
 }
 
