@@ -1,3 +1,7 @@
+resource "random_id" "cluster_token" {
+  byte_length = 16
+}
+
 # Controller public IPv4 addresses
 resource "azurerm_public_ip" "nodes" {
     resource_group_name = azurerm_resource_group.cluster.name
@@ -38,11 +42,14 @@ resource "azurerm_linux_virtual_machine" "nodes" {
     count               = var.node_count
     depends_on          = [azurerm_network_interface_security_group_association.nodes]
     name                = "microk8s-${var.cluster_name}-node-${count.index}"
-    location            = var.region
+    location            = azurerm_resource_group.cluster.location
     
     size                = var.node_type
     custom_data         = base64encode(data.template_file.node_config.rendered)
 
+    tags = {
+      environment = "microk8s-cluster"
+    }
     # storage
     os_disk {
       caching              = "ReadWrite"
@@ -90,7 +97,9 @@ data "template_file" "node_config" {
 resource "null_resource" "set_node_sudo" {
     count           = var.node_count
     depends_on      = [azurerm_linux_virtual_machine.nodes]
-
+    triggers = {
+      rerun = random_id.cluster_token.hex
+    }
     connection {
       type    = "ssh"
       host    = azurerm_public_ip.nodes.*.ip_address[count.index]
@@ -109,6 +118,9 @@ resource "null_resource" "set_node_sudo" {
 # Then prepare for the join nodes by creating the sequence token in /tmp/current_joining_node.txt
 resource "null_resource" "setup_tokens" {
     depends_on = [null_resource.set_node_sudo]
+    triggers = {
+      rerun = random_id.cluster_token.hex
+    }
     connection {
       type    = "ssh"
       host    = azurerm_public_ip.nodes[0].ip_address
@@ -125,7 +137,7 @@ resource "null_resource" "setup_tokens" {
         content     = templatefile("${path.module}/templates/add-node.sh", 
             {
                 main_node = azurerm_public_ip.nodes[0].ip_address
-                cluster_token = var.cluster_token
+                cluster_token = random_id.cluster_token.hex
                 cluster_token_ttl_seconds = var.cluster_token_ttl_seconds
             })
         destination = "/tmp/add-node.sh"
@@ -143,7 +155,9 @@ resource "null_resource" "setup_tokens" {
 resource "null_resource" "join_nodes" {
     count           = var.node_count - 1 < 1 ? 0 : var.node_count - 1
     depends_on      = [null_resource.set_node_sudo, null_resource.setup_tokens]
-
+    triggers = {
+      rerun = random_id.cluster_token.hex
+    }
     connection {
       type    = "ssh"
       host    = element(azurerm_public_ip.nodes.*.ip_address, count.index + 1)
@@ -159,7 +173,7 @@ resource "null_resource" "join_nodes" {
     provisioner "file" {
         content     = templatefile("${path.module}/templates/join.sh", 
             {
-                cluster_token = var.cluster_token
+                cluster_token = random_id.cluster_token.hex
                 main_node = azurerm_linux_virtual_machine.nodes[0].private_ip_address
             })
         destination = "/tmp/join.sh"

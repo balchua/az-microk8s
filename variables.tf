@@ -40,12 +40,6 @@ variable "cluster_token_ttl_seconds" {
     description = "The cluster token ttl to use when joining a node, default 3600 seconds."
 }
 
-variable "cluster_token" {
-    type        = string
-    description = "The cluster token to use to join a node.  Must be 32 alphanumeric long." 
-    default     = "qwertyuiopasdfghjklzxcvbnm1234567"
-}
-
 variable "ssh_public_key" {
     type        = string
     description = "Your public key location. usually located in ~/.ssh/id_rsa.pub"

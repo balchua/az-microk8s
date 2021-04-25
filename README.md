@@ -15,7 +15,6 @@ module "az-microk8s" {
     node_type = "Standard_DS3_v2"
     node_count = "3"
     microk8s_channel = "latest/stable"
-    cluster_token = "PoiuyTrewQasdfghjklMnbvcxz123409"
     cluster_token_ttl_seconds = 3600    
 }
 
@@ -30,7 +29,6 @@ module "az-microk8s" {
 | node_count                    | The number of MicroK8s nodes to create   | `3`
 | region                        | Azure region <br/> To get the list of regions `az account list-locations -o table`| `southeastasia`
 | microk8s_channel              | Specify the MicroK8s channel to use.  Refer [here](https://snapcraft.io/microk8s)| `edge`
-| cluster_token                 | The bootstrap token to use when joining nodes together, must be 32 alphanumeric characters long.| `qwertyuiopasdfghjklzxcvbnm1234567`
 | cluster_token_ttl_seconds     | How long the token validity (in seconds)| `3600`
 | ssh_public_key                | The location of your public key to use to connect to the Azure compute| `~/.ssh/id_rsa.pub`
 | ssh_private_key               | The location of your private key.  Used to connect to the Azure compute instances| `~/.ssh/id_rsa`
